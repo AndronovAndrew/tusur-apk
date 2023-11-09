@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="tusur_blue">#3C388D</color>
+    <color name="tusur_purple">#652580</color>
+    <color name="tusur_green">#9FC53A</color>
+    <color name="tusur_blue2">#3BBCD4</color>
+    <color name="red">#F00</color>
+    <color name="pink">#ff57f9</color>
+    <color name="tusur_grey">#6C8899</color>
+</resources>
