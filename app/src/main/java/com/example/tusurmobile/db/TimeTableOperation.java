@@ -22,19 +22,22 @@ public class TimeTableOperation {
             dbHelper.close();
         }
 
-        public void insertData(String tableName, String data) {
+        public void insertData(String tableName, String data,String faculty,String group) {
             ContentValues values = new ContentValues();
             values.put("data", data);
-
+            values.put("data_group", group);
+            values.put("data_faculty", faculty);
             // Вставляем данные в таблицу
             database.insert(tableName, null, values);
         }
 
         @SuppressLint("Range")
-        public String fetchData(String tableName) {
+        public String fetchData(String tableName,String group_name, String faculty) {
             String result = null;
-            Cursor cursor = database.query(tableName, new String[]{"data"}, null, null, null, null, null);
-            if (cursor.moveToFirst()) {
+            String selection = "data_group = ? AND data_faculty = ?";
+            String[] selectionArgs = {group_name,faculty};
+            Cursor cursor = database.query(tableName, null ,selection, selectionArgs, null, null, null);
+            if (cursor.moveToFirst() && cursor!= null) {
                 result = cursor.getString(cursor.getColumnIndex("data"));
 //                Log.d("Logcat",result);
             }
@@ -42,27 +45,35 @@ public class TimeTableOperation {
             return result;
         }
 
-        @SuppressLint("Range")
-        public boolean isDataFilled(String tableName) {
-            Cursor cursor = database.query(tableName, new String[]{"isFilled"}, null, null, null, null, null);
-            boolean isFilled = false;
-            if (cursor.moveToFirst()) {
-                isFilled = cursor.getInt(cursor.getColumnIndex("isFilled")) == 1;
+        public boolean checkData(String group, String faculty, String tableName){
+            try {
+                open();
+                SQLiteDatabase database = dbHelper.getReadableDatabase();
+                String query = "SELECT COUNT(*) FROM " + tableName + " WHERE data_group = ? AND data_faculty = ?";
+
+                // Выполняем запрос и получаем результат
+                Cursor cursor = database.rawQuery(query, new String[]{group, faculty});
+
+                // Проверяем наличие записи
+                boolean recordExists = false;
+                if (cursor != null && cursor.moveToFirst()) {
+                    int count = cursor.getInt(0);
+                    if (count > 0) {
+                        recordExists = true;
+                    }
+                }
+
+                // Закрываем курсор и базу данных
+                if (cursor != null) {
+                    cursor.close();
+                }
+                close();
+                Log.d("Pidor", String.valueOf(recordExists));
+                // Возвращаем результат
+                return recordExists;
             }
-            cursor.close();
-            return isFilled;
-        }
-
-        public void markDataAsFilled(String tableName) {
-            ContentValues values = new ContentValues();
-            values.put("isFilled", 1);
-
-            // Обновляем поле isFilled в таблице
-            database.update(tableName, values, null, null);
-        }
-
-        public void deleteTable(String tableName) {
-            // Удаляем таблицу
-            database.execSQL("DROP TABLE IF EXISTS " + tableName);
+            catch (Exception ex){
+                return false;
+            }
         }
 }

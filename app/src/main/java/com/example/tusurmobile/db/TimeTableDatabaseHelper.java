@@ -28,7 +28,7 @@ public class TimeTableDatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Метод вызывается при изменении версии базы данных (не рассматриваем в данном примере)
+
     }
 
     private void createTable(SQLiteDatabase db, String tableName) {
@@ -36,7 +36,8 @@ public class TimeTableDatabaseHelper extends SQLiteOpenHelper {
         String createTableQuery = "CREATE TABLE " + tableName + " (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "data TEXT," +
-                "isFilled INTEGER DEFAULT 0)";
+                "data_group Text," +
+                "data_faculty Text)";
         db.execSQL(createTableQuery);
     }
     public static boolean isDbExist(Context context){

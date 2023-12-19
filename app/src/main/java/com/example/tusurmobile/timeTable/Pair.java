@@ -22,15 +22,6 @@ public class Pair {
         return null;
     }
 
-//    public String getName(String[] namePair, int pair){
-//        try {
-//            String[] name = splitPair((namePair[pair]));
-//            return name[0];
-//        }
-//        catch (Exception ignored){
-//            return "";
-//        }
-//    }
     public String getType(String[] dataPair, int pair, int part){
         try {
             String[] type = splitPair((dataPair[pair]));
@@ -40,22 +31,4 @@ public class Pair {
             return "";
         }
     }
-//    public String getCabinet(String[] namePair, int pair){
-//        try{
-//        String[] cabinet = splitPair((namePair[pair]));
-//        return cabinet[2];
-//        }
-//        catch (Exception ignored){
-//            return "";
-//        }
-//    }
-//    public String getTeacher(String[] namePair, int pair){
-//        try {
-//            String[] teacher = splitPair((namePair[pair]));
-//            return teacher[3];
-//        }
-//        catch (Exception ignored){
-//            return "";
-//        }
-//    }
 }

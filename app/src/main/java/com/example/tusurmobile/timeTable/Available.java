@@ -1,4 +1,4 @@
-package com.example.tusurmobile;
+package com.example.tusurmobile.timeTable;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -6,7 +6,7 @@ import android.net.ConnectivityManager;
 import java.net.InetAddress;
 
 public class Available {
-        public boolean isNetworkAvailable(Context c){
+    public boolean isNetworkAvailable(Context c){
         ConnectivityManager connectivityManager = ((ConnectivityManager)c.getSystemService(Context.CONNECTIVITY_SERVICE));
         return connectivityManager.getActiveNetworkInfo() !=null && connectivityManager.getActiveNetworkInfo().isConnected();
     }
@@ -20,3 +20,4 @@ public class Available {
         }
     }
 }
+

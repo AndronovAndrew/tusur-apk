@@ -27,8 +27,7 @@ public class dayRunWednesday {
         @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         public void run() {
-            Parser parser = new Parser();
-            parser.Insert3(index, tO,handler);
+            Parser.Insert3(index, tO,handler);
         }
     }
 

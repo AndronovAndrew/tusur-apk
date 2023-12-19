@@ -3,21 +3,21 @@ import static android.widget.Toast.makeText;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -27,7 +27,9 @@ import androidx.core.content.ContextCompat;
 
 import com.example.tusurmobile.db.TimeTableDatabaseHelper;
 import com.example.tusurmobile.db.TimeTableOperation;
+import com.example.tusurmobile.timeTable.Available;
 import com.example.tusurmobile.timeTable.Drow;
+import com.example.tusurmobile.timeTable.GetParamsForUrl;
 import com.example.tusurmobile.timeTable.Pair;
 import com.example.tusurmobile.timeTable.Points;
 import com.example.tusurmobile.timeTable.dayRunFriday;
@@ -37,18 +39,15 @@ import com.example.tusurmobile.timeTable.dayRunThursday;
 import com.example.tusurmobile.timeTable.dayRunTuesday;
 import com.example.tusurmobile.timeTable.dayRunWednesday;
 
-import org.w3c.dom.Text;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.format.TextStyle;
-import java.time.temporal.TemporalAdjuster;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Locale;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private GestureDetector gestureDetector;
+    // Создание GestureDetector
     Button _monday;
     Button _tuesday;
     Button _wednesday;
@@ -218,12 +217,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ImageView person7;
 
 
-
+    int _currentIndexBtn;
+    TextView textViewTittle;
     @SuppressLint("ResourceAsColor")
     @Override
-    protected void onCreate(Bundle savedInstanceState) { // Инициализация формы
+    protected void onCreate(Bundle savedInstanceState) {
+        // Инициализация формы
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        textViewTittle = (TextView)findViewById(R.id.textViewTittle);
+        gestureDetector = new GestureDetector(this, new MyTouchListener());
+        View view = findViewById(R.id.SV);
+        textViewTittle.setText("Группа " + GetParamsForUrl.groupTittle);
+        // Установка слушателя касаний для вашего View
+        view.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return gestureDetector.onTouchEvent(event);
+            }
+        });
+
+
         ScrollView = (ScrollView)findViewById(R.id.SV);
         _monday = (Button)findViewById(R.id.Monday);
         _monday.setOnClickListener(MainActivity.this);
@@ -237,7 +251,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         _friday.setOnClickListener(this::friday);
         _saturday = (Button)findViewById(R.id.Saturday);
         _saturday.setOnClickListener(this::saturday);
-
+        _currentIndexBtn = 0;
         tvNoPar = (TextView)findViewById(R.id.tvMoPar);
 
         person1 = (ImageView)findViewById(R.id.person1);
@@ -326,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvTimeFriday = (TextView)findViewById(R.id.tvTimeFriday);
         tvTimeSaturday = (TextView)findViewById(R.id.tvTimeSaturday);
 
-        TextView15 = (TextView)findViewById(R.id.textView15);
+        TextView15 = (TextView)findViewById(R.id.textViewMonth);
 
         cl1 = (ConstraintLayout)findViewById(R.id.constraintLayout1);
         cl2 = (ConstraintLayout)findViewById(R.id.constraintLayout2);
@@ -380,8 +394,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drow = new Drow(back_blue,back,black,t1,t2,t3,t4,t5,t6,_monday,_tuesday,_wednesday,_thursday,_friday,_saturday);
 //        TimeTableDatabaseHelper.dropDb(this);
         context = this;
-//        TimeTableDatabaseHelper dH = new TimeTableDatabaseHelper(this);
-        if (!TimeTableDatabaseHelper.isDbExist(this)) {
+        TimeTableOperation tO = new TimeTableOperation(this);
+        Available available = new Available();
+        if (!tO.checkData(GetParamsForUrl.groupTittle,GetParamsForUrl.facultyTittle,"TableMonday") &&
+                available.isNetworkAvailable(context)) {
+            Log.d("Logcat","Интернет");
             tvNoPar.setVisibility(View.GONE);
             ScrollView.setVisibility(View.GONE);
             tvTimeMonday.setTextColor(R.color.white);
@@ -395,19 +412,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             firstThread.start();
         }
         else{
-            Drow_Points();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                tvNoPar.setVisibility(View.GONE);
-                Currentday();
-                ScrollView.setVisibility(View.VISIBLE);
-                dropImages();
+            if(tO.checkData(GetParamsForUrl.groupTittle,GetParamsForUrl.facultyTittle,"TableMonday")) {
+                Log.d("Logcat","Интернета нет");
+                Drow_Points();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    tvNoPar.setVisibility(View.GONE);
+                    Currentday();
+                    ScrollView.setVisibility(View.VISIBLE);
+                    dropImages();
+                }
+            }
+            else{
+                Intent intent = new Intent(this,FieldsActivity.class);
+                startActivity(intent);
             }
         }
         handler = new Handler(){
+            @SuppressLint("HandlerLeak")
             @Override
             public void handleMessage(Message msg) {
+                if(msg.what == 2)
+                {
+                    Intent intent = new Intent(context,FieldsActivity.class);
+                    startActivity(intent);
+                }
                 count++;
-                if(count == 6){
+                if (count == 6) {
                     tvNoPar.setVisibility(View.GONE);
                     tvTimeMonday.setTextColor(R.color.black);
                     tvTimeTuesday.setTextColor(R.color.black);
@@ -423,8 +453,78 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     ScrollView.setVisibility(View.VISIBLE);
                     dropImages();
                 }
+
             }
         };
+    }
+    class MyTouchListener extends GestureDetector.SimpleOnGestureListener {
+        private static final int SWIPE_THRESHOLD = 100;
+        private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            float distanceX = e2.getX() - e1.getX();
+            float distanceY = e2.getY() - e1.getY();
+
+            if (Math.abs(distanceX) > Math.abs(distanceY) &&
+                    Math.abs(distanceX) > SWIPE_THRESHOLD &&
+                    Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+
+                if (distanceX > 0) {
+                    if(_currentIndexBtn != 1) {
+                        switch (_currentIndexBtn){
+                            case 2:
+                                onClick(_monday);
+                                break;
+                            case 3:
+                                tuesday(_tuesday);
+                                break;
+                            case 4:
+                                wednesday(_wednesday);
+                                break;
+                            case 5:
+                                thursday(_thursday);
+                                break;
+                            case 6:
+                                friday(_friday);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        onClick(_monday);
+                    }
+                }
+
+                if (distanceX < 0) {
+                    if(_currentIndexBtn != 6) {
+                        switch (_currentIndexBtn){
+                            case 2:
+                                wednesday(_wednesday);
+                                break;
+                            case 3:
+                                thursday(_thursday);
+                                break;
+                            case 4:
+                                friday(_friday);
+                                break;
+                            case 5:
+                                saturday(_saturday);
+                                break;
+                            case 1:
+                                tuesday(_tuesday);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        saturday(_saturday);
+                    }
+                }
+
+            }
+            return super.onFling(e1, e2, velocityX, velocityY);
+        }
     }
     public void dropImages(){
         setVisibleImages();
@@ -499,26 +599,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if(dayOfWeek==DayOfWeek.MONDAY){
             drow.onClick(1);
             FinalDrowForOnClick(tableNameMonday,tm1,tm2,tm3,tm4,tm5,tm6,tm7);
+            _currentIndexBtn = 1;
         }
         if(dayOfWeek==DayOfWeek.TUESDAY){
             drow.onClick(2);
             FinalDrowForOnClick(tableNameTuesday,tm8,tm9,tm10,tm11,tm12,tm13,tm14);
+            _currentIndexBtn = 2;
         }
         if(dayOfWeek==DayOfWeek.WEDNESDAY){
             drow.onClick(3);
             FinalDrowForOnClick(tableNameWednesday,tm15,tm16,tm17,tm18,tm19,tm20,tm21);
+            _currentIndexBtn = 3;
         }
         if(dayOfWeek==DayOfWeek.THURSDAY){
             drow.onClick(4);
             FinalDrowForOnClick(tableNameThursday,tm22,tm23,tm24,tm25,tm26,tm27,tm28);
+            _currentIndexBtn = 4;
         }
         if(dayOfWeek==DayOfWeek.FRIDAY){
             drow.onClick(5);
             FinalDrowForOnClick(tableNameFriday,tm29,tm30,tm31,tm32,tm33,tm34,tm35);
+            _currentIndexBtn = 5;
         }
         if(dayOfWeek==DayOfWeek.SATURDAY){
             drow.onClick(6);
             FinalDrowForOnClick(tableNameSaturday,tm36,tm37,tm38,tm39,tm40,tm41,tm42);
+            _currentIndexBtn = 6;
         }
     }
 
@@ -530,7 +636,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Drow_Day(countLessons);
         TimeTableOperation tO = new TimeTableOperation(context);
         tO.open();
-        String Lessons = tO.fetchData(TableName);
+        String Lessons = tO.fetchData(TableName,GetParamsForUrl.groupTittle,GetParamsForUrl.facultyTittle);
         FinalDrow(Lessons,tm1,tm2,tm3,tm4,tm5,tm6,tm7,TableName);
         tO.close();
         WritePartsLessons(  tv1,tv2,tv3,tv4,tv5,tv6,tv7,
@@ -1194,7 +1300,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String[] type = new String[7];
         TimeTableOperation tO = new TimeTableOperation(this);
         tO.open();
-        String data = tO.fetchData(tableName);
+        String data = tO.fetchData(tableName,GetParamsForUrl.groupTittle,GetParamsForUrl.facultyTittle);
         for(int i=1, j = 0; i<8;i++){
             if(GetPart(i,1,data) != "")
                 type[j] = GetPart(i,part,data);
@@ -1251,6 +1357,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drow.onClick(1);
         FinalDrowForOnClick(tableNameMonday,tm1,tm2,tm3,tm4,tm5,tm6,tm7);
         dropImages();
+        _currentIndexBtn = 1;
     }
 
     public void tuesday(View view){
@@ -1260,6 +1367,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drow.onClick(2);
         FinalDrowForOnClick(tableNameTuesday,tm8,tm9,tm10,tm11,tm12,tm13,tm14);
         dropImages();
+        _currentIndexBtn = 2;
     }
     public void wednesday(View view){
         tvNoPar.setVisibility(View.GONE);
@@ -1268,6 +1376,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drow.onClick(3);
         FinalDrowForOnClick(tableNameWednesday,tm15,tm16,tm17,tm18,tm19,tm20,tm21);
         dropImages();
+        _currentIndexBtn = 3;
     }
     public void thursday(View view){
         tvNoPar.setVisibility(View.GONE);
@@ -1276,6 +1385,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drow.onClick(4);
         FinalDrowForOnClick(tableNameThursday,tm22,tm23,tm24,tm25,tm26,tm27,tm28);
         dropImages();
+        _currentIndexBtn = 4;
     }
     public void friday(View view){
         tvNoPar.setVisibility(View.GONE);
@@ -1284,6 +1394,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drow.onClick(5);
         FinalDrowForOnClick(tableNameFriday,tm29,tm30,tm31,tm32,tm33,tm34,tm35);
         dropImages();
+        _currentIndexBtn = 5;
     }
     public void saturday(View view){
         tvNoPar.setVisibility(View.GONE);
@@ -1292,5 +1403,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drow.onClick(6);
         FinalDrowForOnClick(tableNameSaturday,tm36,tm37,tm38,tm39,tm40,tm41,tm42);
         dropImages();
+        _currentIndexBtn = 6;
     }
 }
